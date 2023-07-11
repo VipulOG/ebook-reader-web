@@ -1,3 +1,5 @@
+Cloned from: https://github.com/johnfactotum/foliate-js.git
+
 # foliate-js
 
 Library for rendering e-books in the browser.
@@ -10,18 +12,6 @@ Features:
 - Does not depend on or include any library for unzipping; bring your own Zip library
 - Does not require loading whole file into memory
 - Does not care about older browsers
-
-## Demo
-
-The repo includes a demo viewer that can be used to open local files. To use it, serve the files with a server, and navigate to `reader.html`. Or visit the [online demo](https://johnfactotum.github.io/foliate-js/reader.html) hosted on GitHub. Note that it is very incomplete at the moment, and lacks many basic features such as keyboard shortcuts.
-
-Also note that deobfuscating fonts with the IDPF algorithm requires a SHA-1 function. By default it uses Web Crypto, which is only available in secure contexts. Without HTTPS, you will need to modify `reader.js` and pass your own SHA-1 implementation.
-
-## Current Status
-
-It's far from complete or stable yet, though it should have near feature parity with [Epub.js](https://github.com/futurepress/epub.js). There's no support for continuous scrolling, however.
-
-Among other things, the fixed-layout renderer is notably unfinished at the moment.
 
 ## Documentation
 
