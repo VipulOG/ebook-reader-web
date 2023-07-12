@@ -157,8 +157,6 @@ class Reader {
         this.view.renderer.next()
 
         $('#nav-bar').style.visibility = 'visible'
-        $('#left-button').addEventListener('click', () => this.view.goLeft())
-        $('#right-button').addEventListener('click', () => this.view.goRight())
 
         const slider = $('#progress-slider')
         slider.dir = book.dir
