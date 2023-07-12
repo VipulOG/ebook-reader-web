@@ -25,22 +25,6 @@ class Reader {
         this.view.renderer.setStyles?.(getCSS(this.style))
         this.view.renderer.next()
 
-        const fractions = []
-        const sizes = book.sections.filter(s => s.linear !== 'no').map(s => s.size)
-        if (sizes.length < 100) {
-            const total = sizes.reduce((a, b) => a + b, 0)
-            let sum = 0
-            for (const size of sizes.slice(0, -1)) {
-                sum += size
-                fractions.push(sum / total)
-            }
-        }
-
-        const title = book.metadata?.title ?? 'Untitled Book'
-        const author = book.metadata?.author
-        const toc = book.toc
-        // TODO: Pass book details on book load to android interface
-
         // load and show highlights embedded in the file by Calibre
         const bookmarks = await book.getCalibreBookmarks?.()
         if (bookmarks) {
@@ -70,7 +54,7 @@ class Reader {
                 const { color } = annotation
                 draw(Overlayer.highlight, { color })
             })
-            
+
             this.view.addEventListener('show-annotation', e => {
                 const annotation = this.annotationsByValue.get(e.detail.value)
                 if (annotation.note) alert(annotation.note)
@@ -84,8 +68,41 @@ class Reader {
         else if(k === 'ArrowRight' || k === 'l') this.view.goRight()
     }
 
-    #onLoad({ detail: { doc } }) {
+    async #onLoad({ detail: { doc } }) {
         doc.addEventListener('keydown', this.#handleKeydown.bind(this))
+        const { book } = this.view
+        const tocFractions = []
+        const sizes = book.sections.filter(s => s.linear !== 'no').map(s => s.size)
+        if (sizes.length < 100) {
+            const total = sizes.reduce((a, b) => a + b, 0)
+            let sum = 0
+            for (const size of sizes.slice(0, -1)) {
+                sum += size
+                const fraction = sum / total
+                tocFractions.push(fraction)
+            }
+        }
+
+        const data = {
+            title: book.metadata?.title,
+            subtitle: book.metadata?.subtitle,
+            author: book.metadata?.author,
+            description: book.metadata?.description,
+            cover: await book?.getCover?.(),
+            identifier: book.metadata?.identifier,
+            language: book.metadata?.language,
+            publisher: book.metadata?.publisher,
+            contributor: book.metadata?.contributor,
+            published: book.metadata?.published,
+            modified: book.metadata?.modified,
+            subject: book.metadata?.subject,
+            rights: book.metadata?.rights,
+            direction: book.metadata?.direction,
+            toc: book.toc,
+            tocFraction: tocFractions,
+        }
+        
+        AndroidInterface.onBookLoaded(data);
     }
 
     #onRelocate({ detail }) {
