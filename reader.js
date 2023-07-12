@@ -290,29 +290,14 @@ class Reader {
 }
 
 const open = async file => {
-    document.body.removeChild($('#drop-target'))
+    try {
     const reader = new Reader()
     globalThis.reader = reader
     await reader.open(file)
-}
-
-const dragOverHandler = e => e.preventDefault()
-const dropHandler = e => {
-    e.preventDefault()
-    const item = Array.from(e.dataTransfer.items)
-        .find(item => item.kind === 'file')
-    if (item) {
-        const entry = item.webkitGetAsEntry()
-        open(entry.isFile ? item.getAsFile() : entry).catch(e => console.error(e))
+    } catch (error) {
+        AndroidInterface.onBookLoadFailed(error);
     }
 }
-const dropTarget = $('#drop-target')
-dropTarget.addEventListener('drop', dropHandler)
-dropTarget.addEventListener('dragover', dragOverHandler)
-
-$('#file-input').addEventListener('change', e =>
-    open(e.target.files[0]).catch(e => console.error(e)))
-$('#file-button').addEventListener('click', () => $('#file-input').click())
 
 const params = new URLSearchParams(location.search)
 const url = params.get('url')
@@ -320,4 +305,4 @@ if (url) fetch(url)
     .then(res => res.blob())
     .then(blob => open(new File([blob], new URL(url).pathname)))
     .catch(e => console.error(e))
-else dropTarget.style.visibility = 'visible'
+else AndroidInterface.onBookLoadFailed("Invalid Url");
