@@ -92,7 +92,6 @@ class Reader {
             modified: book.metadata?.modified,
             subject: book.metadata?.subject,
             rights: book.metadata?.rights,
-            direction: book.metadata?.direction,
             toc: book.toc,
             tocFraction: tocFractions,
         }
