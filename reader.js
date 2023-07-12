@@ -19,6 +19,7 @@ class Reader {
         this.view = await getView(file)
         this.view.addEventListener('load', this.#onLoad.bind(this))
         this.view.addEventListener('relocate', this.#onRelocate.bind(this))
+        document.addEventListener('keydown', this.#handleKeydown.bind(this))
 
         const { book } = this.view
         this.view.renderer.setStyles?.(getCSS(this.style))
@@ -34,8 +35,6 @@ class Reader {
                 fractions.push(sum / total)
             }
         }
-
-        document.addEventListener('keydown', this.#handleKeydown.bind(this))
 
         const title = book.metadata?.title ?? 'Untitled Book'
         const author = book.metadata?.author
@@ -58,31 +57,37 @@ class Reader {
                     this.annotationsByValue.set(value, annotation)
                 }
             }
+
             this.view.addEventListener('create-overlay', e => {
                 const { index } = e.detail
                 const list = this.annotations.get(index)
                 if (list) for (const annotation of list)
                     this.view.addAnnotation(annotation)
             })
+
             this.view.addEventListener('draw-annotation', e => {
                 const { draw, annotation } = e.detail
                 const { color } = annotation
                 draw(Overlayer.highlight, { color })
             })
+            
             this.view.addEventListener('show-annotation', e => {
                 const annotation = this.annotationsByValue.get(e.detail.value)
                 if (annotation.note) alert(annotation.note)
             })
         }
     }
+
     #handleKeydown(event) {
         const k = event.key
         if (k === 'ArrowLeft' || k === 'h') this.view.goLeft()
         else if(k === 'ArrowRight' || k === 'l') this.view.goRight()
     }
+
     #onLoad({ detail: { doc } }) {
         doc.addEventListener('keydown', this.#handleKeydown.bind(this))
     }
+
     #onRelocate({ detail }) {
         const { fraction, location, tocItem, pageItem } = detail
         const percent = percentFormat.format(fraction)
@@ -96,7 +101,7 @@ const open = async file => {
         globalThis.reader = reader
         await reader.open(file)
     } catch (error) {
-        AndroidInterface.onBookLoadFailed(error);
+        AndroidInterface.onBookLoadFailed(error)
     }
 }
 
@@ -106,7 +111,7 @@ if (url) fetch(url)
     .then(res => res.blob())
     .then(blob => open(new File([blob], new URL(url).pathname)))
     .catch(e => console.error(e))
-else AndroidInterface.onBookLoadFailed("Invalid Url");
+else AndroidInterface.onBookLoadFailed("Invalid Url")
 
 // Helper functions
 const isZip = async file => {
