@@ -1,5 +1,4 @@
 import './view.js'
-import { createTOCView } from './ui/tree.js'
 import { Overlayer } from './overlayer.js'
 
 const isZip = async file => {
@@ -140,7 +139,6 @@ const locales = 'en'
 const percentFormat = new Intl.NumberFormat(locales, { style: 'percent' })
 
 class Reader {
-    #tocView
     style = {
         spacing: 1.4,
         justify: true,
@@ -148,16 +146,7 @@ class Reader {
     }
     annotations = new Map()
     annotationsByValue = new Map()
-    closeSideBar() {
-        $('#dimming-overlay').classList.remove('show')
-        $('#side-bar').classList.remove('show')
-    }
-    constructor() {
-        $('#side-bar-button').addEventListener('click', () => {
-            $('#dimming-overlay').classList.add('show')
-            $('#side-bar').classList.add('show')
-        })
-    }
+    
     async open(file) {
         this.view = await getView(file)
         this.view.addEventListener('load', this.#onLoad.bind(this))
@@ -167,7 +156,6 @@ class Reader {
         this.view.renderer.setStyles?.(getCSS(this.style))
         this.view.renderer.next()
 
-        $('#header-bar').style.visibility = 'visible'
         $('#nav-bar').style.visibility = 'visible'
         $('#left-button').addEventListener('click', () => this.view.goLeft())
         $('#right-button').addEventListener('click', () => this.view.goRight())
@@ -191,25 +179,9 @@ class Reader {
         document.addEventListener('keydown', this.#handleKeydown.bind(this))
 
         const title = book.metadata?.title ?? 'Untitled Book'
-        document.title = title
-        $('#side-bar-title').innerText = title
         const author = book.metadata?.author
-        $('#side-bar-author').innerText = typeof author === 'string' ? author
-            : author
-                ?.map(author => typeof author === 'string' ? author : author.name)
-                ?.join(', ')
-                ?? ''
-        Promise.resolve(book.getCover?.())?.then(blob =>
-            blob ? $('#side-bar-cover').src = URL.createObjectURL(blob) : null)
-
         const toc = book.toc
-        if (toc) {
-            this.#tocView = createTOCView(toc, href => {
-                this.view.goTo(href).catch(e => console.error(e))
-                this.closeSideBar()
-            })
-            $('#toc-view').append(this.#tocView.element)
-        }
+        // TODO: Pass book details on book load to android interface
 
         // load and show highlights embedded in the file by Calibre
         const bookmarks = await book.getCalibreBookmarks?.()
@@ -262,7 +234,7 @@ class Reader {
         slider.style.visibility = 'visible'
         slider.value = fraction
         slider.title = `${percent} · ${loc}`
-        if (tocItem?.href) this.#tocView?.setCurrentHref?.(tocItem.href)
+        // TODO: AndroidInterface.onPageChange(...)
     }
 }
 
