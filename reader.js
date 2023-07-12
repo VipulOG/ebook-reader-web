@@ -156,21 +156,14 @@ class Reader {
         this.view.renderer.setStyles?.(getCSS(this.style))
         this.view.renderer.next()
 
-        $('#nav-bar').style.visibility = 'visible'
-
-        const slider = $('#progress-slider')
-        slider.dir = book.dir
-        slider.addEventListener('input', e =>
-            this.view.goToFraction(parseFloat(e.target.value)))
+        const fractions = []
         const sizes = book.sections.filter(s => s.linear !== 'no').map(s => s.size)
         if (sizes.length < 100) {
             const total = sizes.reduce((a, b) => a + b, 0)
             let sum = 0
             for (const size of sizes.slice(0, -1)) {
                 sum += size
-                const option = document.createElement('option')
-                option.value = sum / total
-                $('#tick-marks').append(option)
+                fractions.push(sum / total)
             }
         }
 
@@ -225,13 +218,6 @@ class Reader {
     #onRelocate({ detail }) {
         const { fraction, location, tocItem, pageItem } = detail
         const percent = percentFormat.format(fraction)
-        const loc = pageItem
-            ? `Page ${pageItem.label}`
-            : `Loc ${location.current}`
-        const slider = $('#progress-slider')
-        slider.style.visibility = 'visible'
-        slider.value = fraction
-        slider.title = `${percent} · ${loc}`
         // TODO: AndroidInterface.onPageChange(...)
     }
 }
