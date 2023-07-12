@@ -101,14 +101,13 @@ class Reader {
             toc: book.toc,
             tocFraction: tocFractions,
         }
-        
+
         AndroidInterface.onBookLoaded(data);
     }
 
     #onRelocate({ detail }) {
         const { fraction, location, tocItem, pageItem } = detail
-        const percent = percentFormat.format(fraction)
-        // TODO: AndroidInterface.onPageChange(...)
+        AndroidInterface.onRelocated(fraction, location, tocItem, pageItem)
     }
 }
 
