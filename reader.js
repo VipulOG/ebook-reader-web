@@ -1,6 +1,5 @@
 import './view.js'
 import { createTOCView } from './ui/tree.js'
-import { createMenu } from './ui/menu.js'
 import { Overlayer } from './overlayer.js'
 
 const isZip = async file => {
@@ -158,28 +157,6 @@ class Reader {
             $('#dimming-overlay').classList.add('show')
             $('#side-bar').classList.add('show')
         })
-        $('#dimming-overlay').addEventListener('click', () => this.closeSideBar())
-
-        const menu = createMenu([
-            {
-                name: 'layout',
-                label: 'Layout',
-                type: 'radio',
-                items: [
-                    ['Paginated', 'paginated'],
-                    ['Scrolled', 'scrolled'],
-                ],
-                onclick: value => {
-                    this.view?.renderer.setAttribute('flow', value)
-                },
-            },
-        ])
-        menu.element.classList.add('menu')
-
-        $('#menu-button').append(menu.element)
-        $('#menu-button > button').addEventListener('click', () =>
-            menu.element.classList.toggle('show'))
-        menu.groups.layout.select('paginated')
     }
     async open(file) {
         this.view = await getView(file)
@@ -291,9 +268,9 @@ class Reader {
 
 const open = async file => {
     try {
-    const reader = new Reader()
-    globalThis.reader = reader
-    await reader.open(file)
+        const reader = new Reader()
+        globalThis.reader = reader
+        await reader.open(file)
     } catch (error) {
         AndroidInterface.onBookLoadFailed(error);
     }
