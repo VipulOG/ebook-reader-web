@@ -1,6 +1,114 @@
 import './view.js'
 import { Overlayer } from './overlayer.js'
 
+const $ = document.querySelector.bind(document)
+
+const locales = 'en'
+const percentFormat = new Intl.NumberFormat(locales, { style: 'percent' })
+
+class Reader {
+    style = {
+        spacing: 1.4,
+        justify: true,
+        hyphenate: true,
+    }
+    annotations = new Map()
+    annotationsByValue = new Map()
+    
+    async open(file) {
+        this.view = await getView(file)
+        this.view.addEventListener('load', this.#onLoad.bind(this))
+        this.view.addEventListener('relocate', this.#onRelocate.bind(this))
+
+        const { book } = this.view
+        this.view.renderer.setStyles?.(getCSS(this.style))
+        this.view.renderer.next()
+
+        const fractions = []
+        const sizes = book.sections.filter(s => s.linear !== 'no').map(s => s.size)
+        if (sizes.length < 100) {
+            const total = sizes.reduce((a, b) => a + b, 0)
+            let sum = 0
+            for (const size of sizes.slice(0, -1)) {
+                sum += size
+                fractions.push(sum / total)
+            }
+        }
+
+        document.addEventListener('keydown', this.#handleKeydown.bind(this))
+
+        const title = book.metadata?.title ?? 'Untitled Book'
+        const author = book.metadata?.author
+        const toc = book.toc
+        // TODO: Pass book details on book load to android interface
+
+        // load and show highlights embedded in the file by Calibre
+        const bookmarks = await book.getCalibreBookmarks?.()
+        if (bookmarks) {
+            const { fromCalibreHighlight } = await import('./epubcfi.js')
+            for (const obj of bookmarks) {
+                if (obj.type === 'highlight') {
+                    const value = fromCalibreHighlight(obj)
+                    const color = obj.style.which
+                    const note = obj.notes
+                    const annotation = { value, color, note }
+                    const list = this.annotations.get(obj.spine_index)
+                    if (list) list.push(annotation)
+                    else this.annotations.set(obj.spine_index, [annotation])
+                    this.annotationsByValue.set(value, annotation)
+                }
+            }
+            this.view.addEventListener('create-overlay', e => {
+                const { index } = e.detail
+                const list = this.annotations.get(index)
+                if (list) for (const annotation of list)
+                    this.view.addAnnotation(annotation)
+            })
+            this.view.addEventListener('draw-annotation', e => {
+                const { draw, annotation } = e.detail
+                const { color } = annotation
+                draw(Overlayer.highlight, { color })
+            })
+            this.view.addEventListener('show-annotation', e => {
+                const annotation = this.annotationsByValue.get(e.detail.value)
+                if (annotation.note) alert(annotation.note)
+            })
+        }
+    }
+    #handleKeydown(event) {
+        const k = event.key
+        if (k === 'ArrowLeft' || k === 'h') this.view.goLeft()
+        else if(k === 'ArrowRight' || k === 'l') this.view.goRight()
+    }
+    #onLoad({ detail: { doc } }) {
+        doc.addEventListener('keydown', this.#handleKeydown.bind(this))
+    }
+    #onRelocate({ detail }) {
+        const { fraction, location, tocItem, pageItem } = detail
+        const percent = percentFormat.format(fraction)
+        // TODO: AndroidInterface.onPageChange(...)
+    }
+}
+
+const open = async file => {
+    try {
+        const reader = new Reader()
+        globalThis.reader = reader
+        await reader.open(file)
+    } catch (error) {
+        AndroidInterface.onBookLoadFailed(error);
+    }
+}
+
+const params = new URLSearchParams(location.search)
+const url = params.get('url')
+if (url) fetch(url)
+    .then(res => res.blob())
+    .then(blob => open(new File([blob], new URL(url).pathname)))
+    .catch(e => console.error(e))
+else AndroidInterface.onBookLoadFailed("Invalid Url");
+
+// Helper functions
 const isZip = async file => {
     const arr = new Uint8Array(await file.slice(0, 4).arrayBuffer())
     return arr[0] === 0x50 && arr[1] === 0x4b && arr[2] === 0x03 && arr[3] === 0x04
@@ -132,110 +240,3 @@ const getCSS = ({ spacing, justify, hyphenate }) => `
         display: none;
     }
 `
-
-const $ = document.querySelector.bind(document)
-
-const locales = 'en'
-const percentFormat = new Intl.NumberFormat(locales, { style: 'percent' })
-
-class Reader {
-    style = {
-        spacing: 1.4,
-        justify: true,
-        hyphenate: true,
-    }
-    annotations = new Map()
-    annotationsByValue = new Map()
-    
-    async open(file) {
-        this.view = await getView(file)
-        this.view.addEventListener('load', this.#onLoad.bind(this))
-        this.view.addEventListener('relocate', this.#onRelocate.bind(this))
-
-        const { book } = this.view
-        this.view.renderer.setStyles?.(getCSS(this.style))
-        this.view.renderer.next()
-
-        const fractions = []
-        const sizes = book.sections.filter(s => s.linear !== 'no').map(s => s.size)
-        if (sizes.length < 100) {
-            const total = sizes.reduce((a, b) => a + b, 0)
-            let sum = 0
-            for (const size of sizes.slice(0, -1)) {
-                sum += size
-                fractions.push(sum / total)
-            }
-        }
-
-        document.addEventListener('keydown', this.#handleKeydown.bind(this))
-
-        const title = book.metadata?.title ?? 'Untitled Book'
-        const author = book.metadata?.author
-        const toc = book.toc
-        // TODO: Pass book details on book load to android interface
-
-        // load and show highlights embedded in the file by Calibre
-        const bookmarks = await book.getCalibreBookmarks?.()
-        if (bookmarks) {
-            const { fromCalibreHighlight } = await import('./epubcfi.js')
-            for (const obj of bookmarks) {
-                if (obj.type === 'highlight') {
-                    const value = fromCalibreHighlight(obj)
-                    const color = obj.style.which
-                    const note = obj.notes
-                    const annotation = { value, color, note }
-                    const list = this.annotations.get(obj.spine_index)
-                    if (list) list.push(annotation)
-                    else this.annotations.set(obj.spine_index, [annotation])
-                    this.annotationsByValue.set(value, annotation)
-                }
-            }
-            this.view.addEventListener('create-overlay', e => {
-                const { index } = e.detail
-                const list = this.annotations.get(index)
-                if (list) for (const annotation of list)
-                    this.view.addAnnotation(annotation)
-            })
-            this.view.addEventListener('draw-annotation', e => {
-                const { draw, annotation } = e.detail
-                const { color } = annotation
-                draw(Overlayer.highlight, { color })
-            })
-            this.view.addEventListener('show-annotation', e => {
-                const annotation = this.annotationsByValue.get(e.detail.value)
-                if (annotation.note) alert(annotation.note)
-            })
-        }
-    }
-    #handleKeydown(event) {
-        const k = event.key
-        if (k === 'ArrowLeft' || k === 'h') this.view.goLeft()
-        else if(k === 'ArrowRight' || k === 'l') this.view.goRight()
-    }
-    #onLoad({ detail: { doc } }) {
-        doc.addEventListener('keydown', this.#handleKeydown.bind(this))
-    }
-    #onRelocate({ detail }) {
-        const { fraction, location, tocItem, pageItem } = detail
-        const percent = percentFormat.format(fraction)
-        // TODO: AndroidInterface.onPageChange(...)
-    }
-}
-
-const open = async file => {
-    try {
-        const reader = new Reader()
-        globalThis.reader = reader
-        await reader.open(file)
-    } catch (error) {
-        AndroidInterface.onBookLoadFailed(error);
-    }
-}
-
-const params = new URLSearchParams(location.search)
-const url = params.get('url')
-if (url) fetch(url)
-    .then(res => res.blob())
-    .then(blob => open(new File([blob], new URL(url).pathname)))
-    .catch(e => console.error(e))
-else AndroidInterface.onBookLoadFailed("Invalid Url");
