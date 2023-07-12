@@ -1,11 +1,6 @@
 import './view.js'
 import { Overlayer } from './overlayer.js'
 
-const $ = document.querySelector.bind(document)
-
-const locales = 'en'
-const percentFormat = new Intl.NumberFormat(locales, { style: 'percent' })
-
 class Reader {
     style = {
         spacing: 1.4,
