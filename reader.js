@@ -78,12 +78,23 @@ class Reader {
             }
         }
 
+        function blobToBase64(blob) {
+          return new Promise((resolve, _) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+        }
+
+        const cover = await book?.getCover?.()
+        const coverBase64 = cover ? await blobToBase64(cover) : null
+
         const data = {
             title: book.metadata?.title,
             subtitle: book.metadata?.subtitle,
             author: book.metadata?.author,
             description: book.metadata?.description,
-            cover: await book?.getCover?.(),
+            cover: coverBase64,
             identifier: book.metadata?.identifier,
             language: book.metadata?.language,
             publisher: book.metadata?.publisher,
