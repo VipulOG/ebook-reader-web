@@ -96,12 +96,11 @@ class Reader {
             tocFraction: tocFractions,
         }
 
-        AndroidInterface.onBookLoaded(data);
+        AndroidInterface.onBookLoaded(JSON.stringify(data))
     }
 
     #onRelocate({ detail }) {
-        const { fraction, location, tocItem, pageItem } = detail
-        AndroidInterface.onRelocated(fraction, location, tocItem, pageItem)
+        AndroidInterface.onRelocated(JSON.stringify(detail))
     }
 }
 
