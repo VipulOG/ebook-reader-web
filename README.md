@@ -1,9 +1,5 @@
 Cloned from: https://github.com/johnfactotum/foliate-js.git
 
-# foliate-js
-
-Library for rendering e-books in the browser.
-
 Features:
 - Supports EPUB, MOBI, KF8, FB2, CBZ
 - Pure JavaScript
@@ -239,16 +235,3 @@ An overlayer object implements the following interface for the consumption of re
 
 It provides a search module, which can in fact be used as a standalone module for searching across any array of strings. There's no limit on the number of strings a match is allowed to span. It's based on `Intl.Collator` and `Intl.Segmenter`, to support ignoring diacritics and matching whole words only. It's extrenely slow, and you'd probably want to load results incrementally.
 
-### Supported Browsers
-
-The main use of the library is for use in [Foliate](https://github.com/johnfactotum/foliate), which uses WebKitGTK. As such it's the only engine that has been tested extensively. But it should also work in Chromium and Firefox.
-
-Apart from the renderers, using the modules outside browsers is also possible. Most features depend on having the global objects `Blob`, `TextDecoder`, `TextEncoder`, `DOMParser`, `XMLSerializer`, and `URL`, and should work if you polyfill them. Note that `epubcfi.js` can be used as is in any envirnoment if you only need to parse or sort CFIs.
-
-## License
-
-MIT.
-
-Vendored libraries for the demo:
-- [zip.js](https://github.com/gildas-lormeau/zip.js) is licensed under the BSD-3-Clause license.
-- [fflate](https://github.com/101arrowz/fflate) is MIT licensed.
