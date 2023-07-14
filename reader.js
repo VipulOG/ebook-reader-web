@@ -2,11 +2,7 @@ import './view.js'
 import { Overlayer } from './overlayer.js'
 
 class Reader {
-    style = {
-        spacing: 1.4,
-        justify: true,
-        hyphenate: true,
-    }
+    style = getDefaultStyle()
     annotations = new Map()
     annotationsByValue = new Map()
     
@@ -17,8 +13,8 @@ class Reader {
         document.addEventListener('keydown', this.#handleKeydown.bind(this))
 
         const { book } = this.view
-        this.view.renderer.setStyles?.(getCSS(this.style))
-        this.view.renderer.next()
+        this.setStyle(this.style)
+        globalThis.reader.view.next()
 
         // load and show highlights embedded in the file by Calibre
         const bookmarks = await book.getCalibreBookmarks?.()
@@ -105,6 +101,7 @@ class Reader {
             rights: book.metadata?.rights,
             toc: book.toc,
             tocFraction: tocFractions,
+            theme: this.style,
         }
 
         AndroidInterface.onBookLoaded(JSON.stringify(data))
@@ -112,6 +109,11 @@ class Reader {
 
     #onRelocate({ detail }) {
         AndroidInterface.onRelocated(JSON.stringify(detail))
+    }
+
+    setStyle(style) {
+        this.style = style
+        this.view.renderer.setStyles?.(getCSS(style))
     }
 }
 
@@ -227,7 +229,36 @@ const getView = async file => {
     return view
 }
 
-const getCSS = ({ spacing, justify, hyphenate }) => `
+function getDefaultStyle() {
+  const bodyStyles = window.getComputedStyle(document.body);
+  const backgroundColor = bodyStyles.backgroundColor;
+  const foregroundColor = bodyStyles.color;
+  const fontSize = parseFloat(bodyStyles.fontSize);
+  const lineHeight = parseFloat(bodyStyles.lineHeight);
+  const paragraphSpacing = parseFloat(bodyStyles.paddingBottom);
+
+  const tempElement = document.createElement('div');
+  tempElement.style.fontSize = `${fontSize}px`;
+  tempElement.style.lineHeight = bodyStyles.lineHeight;
+  tempElement.textContent = 'Test';
+
+  document.body.appendChild(tempElement);
+  const lineHeightPixels = tempElement.getBoundingClientRect().height;
+  document.body.removeChild(tempElement);
+
+  return {
+    name: 'default',
+    backgroundColor: backgroundColor,
+    textColor: foregroundColor,
+    fontSize: fontSize,
+    lineHeight: lineHeightPixels,
+    paragraphSpacing: paragraphSpacing,
+    justify: true,
+    hyphenate: true,
+  };
+}
+
+const getCSS = ({ backgroundColor, textColor, fontSize, lineHeight, paragraphSpacing, justify, hyphenate }) => `
     @namespace epub "http://www.idpf.org/2007/ops";
     html {
         color-scheme: light dark;
@@ -238,8 +269,14 @@ const getCSS = ({ spacing, justify, hyphenate }) => `
             color: lightblue;
         }
     }
+    body {
+        background-color: ${backgroundColor};
+        color: ${textColor};
+        font-size: ${fontSize}px;
+    }
     p, li, blockquote, dd {
-        line-height: ${spacing};
+        padding-bottom: ${paragraphSpacing}px;
+        line-height: ${lineHeight}px;
         text-align: ${justify ? 'justify' : 'start'};
         -webkit-hyphens: ${hyphenate ? 'auto' : 'manual'};
         hyphens: ${hyphenate ? 'auto' : 'manual'};
