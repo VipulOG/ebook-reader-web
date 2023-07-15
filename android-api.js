@@ -1,13 +1,21 @@
 function next() {
-    globalThis.reader.view.goRight()
+    globalThis.reader.view.next()
 }
 
 function prev() {
-    globalThis.reader.view.goLeft()
+    globalThis.reader.view.prev()
 }
 
 function goto(locator) {
     globalThis.reader.view.goTo(locator)
+}
+
+function gotoFraction(fraction) {
+    globalThis.reader.view.goToFraction(fraction)
+}
+
+function getTocFractions() {
+    return globalThis.reader.getTocFractions()
 }
 
 function setTheme(theme) {
