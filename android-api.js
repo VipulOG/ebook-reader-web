@@ -33,3 +33,13 @@ function setFlow(flow) {
 function getFlow() {
     return globalThis.reader.view.renderer.getAttribute('flow')
 }
+
+function setDualPageModeEnabled(value) {
+    const count = value ? 2 : 1;
+    globalThis.reader.view.renderer.setAttribute('max-column-count', count)
+}
+
+function isDualPageModeEnabled() {
+    const count = globalThis.reader.view.renderer.getAttribute('max-column-count')
+    return count == 2 || count == null;
+}
