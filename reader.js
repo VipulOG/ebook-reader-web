@@ -62,17 +62,6 @@ class Reader {
     async #onLoad({ detail: { doc } }) {
         doc.addEventListener('keydown', this.#handleKeydown.bind(this))
         const { book } = this.view
-        const tocFractions = []
-        const sizes = book.sections.filter(s => s.linear !== 'no').map(s => s.size)
-        if (sizes.length < 100) {
-            const total = sizes.reduce((a, b) => a + b, 0)
-            let sum = 0
-            for (const size of sizes.slice(0, -1)) {
-                sum += size
-                const fraction = sum / total
-                tocFractions.push(fraction)
-            }
-        }
 
         function blobToBase64(blob) {
           return new Promise((resolve, _) => {
@@ -100,8 +89,6 @@ class Reader {
             subject: book.metadata?.subject,
             rights: book.metadata?.rights,
             toc: book.toc,
-            tocFraction: tocFractions,
-            theme: this.style,
         }
 
         AndroidInterface.onBookLoaded(JSON.stringify(data))
@@ -109,6 +96,21 @@ class Reader {
 
     #onRelocate({ detail }) {
         AndroidInterface.onRelocated(JSON.stringify(detail))
+    }
+
+    getTocFractions() {
+        const tocFractions = []
+        const sizes = this.view.book.sections.filter(s => s.linear !== 'no').map(s => s.size)
+        if (sizes.length < 100) {
+            const total = sizes.reduce((a, b) => a + b, 0)
+            let sum = 0
+            for (const size of sizes.slice(0, -1)) {
+                sum += size
+                const fraction = sum / total
+                tocFractions.push(fraction)
+            }
+        }
+        return tocFractions
     }
 
     setStyle(style) {
