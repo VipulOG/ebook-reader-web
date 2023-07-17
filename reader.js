@@ -2,7 +2,35 @@ import './view.js'
 import { Overlayer } from './overlayer.js'
 
 class Reader {
-    style = getDefaultStyle()
+    style = {
+        lineHeight: 1.4,
+        justify: true,
+        hyphenate: true,
+        invert: false,
+        isDark: false,
+        theme: {
+           name: 'default',
+           light: { fg: '#000000', bg: '#ffffff', link: '#0066cc' },
+           dark: { fg: '#e0e0e0', bg: '#222222', link: '#88ccee' },
+       },
+    }
+
+    constructor() {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            this.style.isDark = true
+        } else {
+            this.style.isDark = false
+        }
+    }
+
+    layout = {
+        gap: 0.06,
+        maxInlineSize: 1440,
+        maxBlockSize: 720,
+        maxColumnCount: 2,
+        flow: 'paginated',
+    }
+
     annotations = new Map()
     annotationsByValue = new Map()
     
@@ -13,7 +41,7 @@ class Reader {
         document.addEventListener('keydown', this.#handleKeydown.bind(this))
 
         const { book } = this.view
-        this.setStyle(this.style)
+        this.setAppearance(this.style, this.layout)
         globalThis.reader.view.next()
 
         // load and show highlights embedded in the file by Calibre
@@ -113,9 +141,30 @@ class Reader {
         return tocFractions
     }
 
-    setStyle(style) {
-        this.style = style
-        this.view.renderer.setStyles?.(getCSS(style))
+    setAppearance(style, layout) {
+
+//        if (style.invert) {
+//            style.theme.light.fg = invert(style.theme.light.fg)
+//            style.theme.light.bg = invert(style.theme.light.bg)
+//            style.theme.dark.fg = invert(style.theme.dark.fg)
+//            style.theme.dark.bg = invert(style.theme.dark.bg)
+//        }
+        Object.assign(this.style, style)
+        const { theme } = style
+        const $style = document.documentElement.style
+        $style.setProperty('--light-bg', theme.light.bg)
+        $style.setProperty('--light-fg', theme.light.fg)
+        $style.setProperty('--dark-bg', theme.dark.bg)
+        $style.setProperty('--dark-fg', theme.dark.fg)
+        const renderer = this.view?.renderer
+        if (renderer) {
+            renderer.setAttribute('flow', layout.flow)
+            renderer.setAttribute('gap', layout.gap * 100 + '%')
+            renderer.setAttribute('max-inline-size', layout.maxInlineSize + 'px')
+            renderer.setAttribute('max-block-size', layout.maxBlockSize + 'px')
+            renderer.setAttribute('max-column-count', layout.maxColumnCount)
+            renderer.setStyles?.(getCSS(this.style))
+        }
     }
 }
 
@@ -231,61 +280,47 @@ const getView = async file => {
     return view
 }
 
-function getDefaultStyle() {
-  const bodyStyles = window.getComputedStyle(document.body);
-  const backgroundColor = bodyStyles.backgroundColor;
-  const foregroundColor = bodyStyles.color;
-  const fontSize = parseFloat(bodyStyles.fontSize);
-  const lineHeight = parseFloat(bodyStyles.lineHeight);
-  const paragraphSpacing = parseFloat(bodyStyles.paddingBottom);
-
-  const tempElement = document.createElement('div');
-  tempElement.style.fontSize = `${fontSize}px`;
-  tempElement.style.lineHeight = bodyStyles.lineHeight;
-  tempElement.textContent = 'Test';
-
-  document.body.appendChild(tempElement);
-  const lineHeightPixels = tempElement.getBoundingClientRect().height;
-  document.body.removeChild(tempElement);
-
-  return {
-    name: 'default',
-    backgroundColor: backgroundColor,
-    textColor: foregroundColor,
-    fontSize: fontSize,
-    lineHeight: lineHeightPixels,
-    paragraphSpacing: paragraphSpacing,
-    justify: true,
-    hyphenate: true,
-  };
-}
-
-const getCSS = ({ backgroundColor, textColor, fontSize, lineHeight, paragraphSpacing, justify, hyphenate }) => `
+const getCSS = ({ isDark, lineHeight, justify, hyphenate, invert, theme }) => [`
     @namespace epub "http://www.idpf.org/2007/ops";
-    html {
-        color-scheme: light dark;
-    }
-    /* https://github.com/whatwg/html/issues/5426 */
-    @media (prefers-color-scheme: dark) {
-        a:link {
-            color: lightblue;
+    @media print {
+        html {
+            column-width: auto !important;
+            height: auto !important;
+            width: auto !important;
         }
     }
-    body {
-        background-color: ${backgroundColor};
-        color: ${textColor};
-        font-size: ${fontSize}px;
+    @media screen {
+        html {
+            color-scheme: ${invert ? 'only light' : isDark ? 'only dark' : 'light dark'};
+            color: ${theme.light.fg};
+        }
+        a:any-link {
+            color: ${theme.light.link};
+        }
+        @media (prefers-color-scheme: dark) {
+            html {
+                color: ${invert ? theme.inverted.fg : theme.dark.fg};
+            }
+            a:any-link {
+                color: ${invert ? theme.inverted.link : theme.dark.link};
+            }
+        }
+        aside[epub|type~="endnote"],
+        aside[epub|type~="footnote"],
+        aside[epub|type~="note"],
+        aside[epub|type~="rearnote"] {
+            display: none;
+        }
     }
-    p, li, blockquote, dd {
-        padding-bottom: ${paragraphSpacing}px;
-        line-height: ${lineHeight}px;
+    html, body, p, li, blockquote, dd {
+        line-height: ${lineHeight};
         text-align: ${justify ? 'justify' : 'start'};
         -webkit-hyphens: ${hyphenate ? 'auto' : 'manual'};
-        hyphens: ${hyphenate ? 'auto' : 'manual'};
         -webkit-hyphenate-limit-before: 3;
         -webkit-hyphenate-limit-after: 2;
         -webkit-hyphenate-limit-lines: 2;
         hanging-punctuation: allow-end last;
+        orphans: 2;
         widows: 2;
     }
     /* prevent the above from overriding the align attribute */
@@ -296,11 +331,12 @@ const getCSS = ({ backgroundColor, textColor, fontSize, lineHeight, paragraphSpa
 
     pre {
         white-space: pre-wrap !important;
+        tab-size: 2;
     }
-    aside[epub|type~="endnote"],
-    aside[epub|type~="footnote"],
-    aside[epub|type~="note"],
-    aside[epub|type~="rearnote"] {
-        display: none;
+`, `
+    p, li, blockquote, dd {
+        line-height: ${lineHeight};
+        text-align: ${justify ? 'justify' : 'start'};
+        -webkit-hyphens: ${hyphenate ? 'auto' : 'manual'};
     }
-`
+`]

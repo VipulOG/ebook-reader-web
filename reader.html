@@ -7,12 +7,24 @@
 <style>
 html {
     height: 100%;
+    --bg: var(--light-bg);
+    --fg: var(--light-fg);
 }
 body {
     margin: 0 auto;
     height: 100%;
-    font: menu;
-    font-family: system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+}
+@media (prefers-color-scheme: dark) {
+    html {
+        --bg: var(--dark-bg);
+        --fg: var(--dark-fg);
+    }
+    .invert foliate-view::part(filter) {
+        color-scheme: light; /* required to make the iframe bg transparent */
+        filter: invert(1) hue-rotate(180deg);
+    }
 }
 </style>
 <script src="reader.js" type="module"></script>

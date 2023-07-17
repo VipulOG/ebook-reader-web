@@ -18,28 +18,56 @@ function getTocFractions() {
     return globalThis.reader.getTocFractions()
 }
 
-function setTheme(theme) {
-    globalThis.reader.setStyle(theme)
+function setAppearance(appearance) {
+    const style = { theme: { light: {}, dark: {} } }
+    style.lineHeight = appearance.lineHeight
+    style.justify = appearance.justify
+    style.hypenate = appearance.hypenate
+    style.invert = appearance.invert
+    style.theme.name = appearance.themeName
+    style.theme.light.fg = appearance.lightFg
+    style.theme.light.bg = appearance.lightBg
+    style.theme.light.link = appearance.lightLink
+    style.theme.dark.fg = appearance.darkFg
+    style.theme.dark.bg = appearance.darkBg
+    style.theme.dark.link = appearance.darkLink
+    style.isDark = appearance.isDark
+
+    const layout = {}
+    layout.gap = appearance.gap
+    layout.maxInlineSize = appearance.maxInlineSize
+    layout.maxBlockSize = appearance.maxBlockSize
+    layout.maxColumnCount = appearance.maxColumnCount
+    layout.flow = appearance.flow
+
+    console.log(appearance)
+
+    globalThis.reader.setAppearance(style, layout)
 }
 
-function getTheme() {
-    return globalThis.reader.style
-}
+function getAppearance() {
+    const style = globalThis.reader.style
+    const layout = globalThis.reader.layout
 
-function setFlow(flow) {
-    globalThis.reader.view.renderer.setAttribute('flow', flow)
-}
+    const appearance = {};
+    appearance.lineHeight = style.lineHeight
+    appearance.justify = style.justify
+    appearance.hypenate = style.hypenate
+    appearance.invert = style.invert
+    appearance.themeName = style.theme.name
+    appearance.lightFg = style.theme.light.fg
+    appearance.lightBg = style.theme.light.bg
+    appearance.lightLink = style.theme.light.link
+    appearance.darkFg = style.theme.dark.fg
+    appearance.darkBg = style.theme.dark.bg
+    appearance.darkLink = style.theme.dark.link
+    appearance.isDark = style.isDark
 
-function getFlow() {
-    return globalThis.reader.view.renderer.getAttribute('flow')
-}
+    appearance.gap = layout.gap
+    appearance.maxInlineSize = layout.maxInlineSize
+    appearance.maxBlockSize = layout.maxBlockSize
+    appearance.maxColumnCount = layout.maxColumnCount
+    appearance.flow = layout.flow
 
-function setDualPageModeEnabled(value) {
-    const count = value ? 2 : 1;
-    globalThis.reader.view.renderer.setAttribute('max-column-count', count)
-}
-
-function isDualPageModeEnabled() {
-    const count = globalThis.reader.view.renderer.getAttribute('max-column-count')
-    return count == 2 || count == null;
+    return appearance
 }
