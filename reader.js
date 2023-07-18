@@ -285,29 +285,28 @@ const getView = async file => {
 }
 
 const getCSS = ({ isDark, lineHeight, justify, hyphenate, invert, theme }) => [`
-    @media screen {
+    html {
+        color-scheme: ${invert ? 'only light' : isDark ? 'only dark' : 'only light'};
+        color: ${theme.light.fg};
+    }
+    a:any-link {
+        color: ${theme.light.link};
+    }
+    @media (prefers-color-scheme: dark) {
         html {
-            color-scheme: ${invert ? 'only light' : isDark ? 'only dark' : 'only light'};
-            color: ${theme.light.fg};
+            color: ${invert ? theme.inverted.fg : theme.dark.fg};
         }
         a:any-link {
-            color: ${theme.light.link};
-        }
-        @media (prefers-color-scheme: dark) {
-            html {
-                color: ${invert ? theme.inverted.fg : theme.dark.fg};
-            }
-            a:any-link {
-                color: ${invert ? theme.inverted.link : theme.dark.link};
-            }
-        }
-        aside[epub|type~="endnote"],
-        aside[epub|type~="footnote"],
-        aside[epub|type~="note"],
-        aside[epub|type~="rearnote"] {
-            display: none;
+            color: ${invert ? theme.inverted.link : theme.dark.link};
         }
     }
+    aside[epub|type~="endnote"],
+    aside[epub|type~="footnote"],
+    aside[epub|type~="note"],
+    aside[epub|type~="rearnote"] {
+        display: none;
+    }
+
     html, body, p, li, blockquote, dd {
         line-height: ${lineHeight};
         text-align: ${justify ? 'justify' : 'start'};
