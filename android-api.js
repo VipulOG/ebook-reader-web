@@ -31,7 +31,7 @@ function setAppearance(appearance) {
     style.theme.dark.fg = appearance.darkFg
     style.theme.dark.bg = appearance.darkBg
     style.theme.dark.link = appearance.darkLink
-    style.isDark = appearance.isDark
+    style.isDark = appearance.useDark
 
     const layout = {}
     layout.gap = appearance.gap
@@ -61,7 +61,7 @@ function getAppearance() {
     appearance.darkFg = style.theme.dark.fg
     appearance.darkBg = style.theme.dark.bg
     appearance.darkLink = style.theme.dark.link
-    appearance.isDark = style.isDark
+    appearance.useDark = style.isDark
 
     appearance.gap = layout.gap
     appearance.maxInlineSize = layout.maxInlineSize
