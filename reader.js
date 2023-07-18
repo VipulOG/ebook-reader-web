@@ -2,6 +2,8 @@ import './view.js'
 import { Overlayer } from './overlayer.js'
 
 class Reader {
+    isBookLoaded = false
+
     style = {
         lineHeight: 1.4,
         justify: true,
@@ -88,6 +90,7 @@ class Reader {
     }
 
     async #onLoad({ detail: { doc } }) {
+        if (this.isBookLoaded) return
         doc.addEventListener('keydown', this.#handleKeydown.bind(this))
         const { book } = this.view
 
@@ -119,11 +122,12 @@ class Reader {
             toc: book.toc,
         }
 
+        this.isBookLoaded = true
         AndroidInterface.onBookLoaded(JSON.stringify(data))
     }
 
     #onRelocate({ detail }) {
-        AndroidInterface.onRelocated(JSON.stringify(detail))
+        if (this.isBookLoaded) AndroidInterface.onRelocated(JSON.stringify(detail))
     }
 
     getTocFractions() {
