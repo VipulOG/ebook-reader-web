@@ -285,17 +285,9 @@ const getView = async file => {
 }
 
 const getCSS = ({ isDark, lineHeight, justify, hyphenate, invert, theme }) => [`
-    @namespace epub "http://www.idpf.org/2007/ops";
-    @media print {
-        html {
-            column-width: auto !important;
-            height: auto !important;
-            width: auto !important;
-        }
-    }
     @media screen {
         html {
-            color-scheme: ${invert ? 'only light' : isDark ? 'only dark' : 'light dark'};
+            color-scheme: ${invert ? 'only light' : isDark ? 'only dark' : 'only light'};
             color: ${theme.light.fg};
         }
         a:any-link {
