@@ -17,14 +17,6 @@ class Reader {
        },
     }
 
-    constructor() {
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            this.style.isDark = true
-        } else {
-            this.style.isDark = false
-        }
-    }
-
     layout = {
         gap: 0.06,
         maxInlineSize: 1440,
@@ -146,20 +138,25 @@ class Reader {
     }
 
     setAppearance(style, layout) {
-
-//        if (style.invert) {
-//            style.theme.light.fg = invert(style.theme.light.fg)
-//            style.theme.light.bg = invert(style.theme.light.bg)
-//            style.theme.dark.fg = invert(style.theme.dark.fg)
-//            style.theme.dark.bg = invert(style.theme.dark.bg)
-//        }
         Object.assign(this.style, style)
         const { theme } = style
         const $style = document.documentElement.style
-        $style.setProperty('--light-bg', theme.light.bg)
-        $style.setProperty('--light-fg', theme.light.fg)
-        $style.setProperty('--dark-bg', theme.dark.bg)
-        $style.setProperty('--dark-fg', theme.dark.fg)
+
+        if (style.inverted) {
+            // TODO: Invert dark fg and link and add to theme object, eg:
+            // theme.inverted.fg = invert(theme.dark.fg)
+            // theme.inverted.link = invert(theme.dark.link)
+        }
+
+        if (style.isDark) {
+            $style.setProperty('--bg', theme.dark.bg)
+            $style.setProperty('--fg', theme.dark.fg)
+        }
+        else {
+            $style.setProperty('--bg', theme.light.bg)
+            $style.setProperty('--fg', theme.light.fg)
+        }
+
         const renderer = this.view?.renderer
         if (renderer) {
             renderer.setAttribute('flow', layout.flow)
@@ -169,6 +166,9 @@ class Reader {
             renderer.setAttribute('max-column-count', layout.maxColumnCount)
             renderer.setStyles?.(getCSS(this.style))
         }
+
+        document.body.classList.toggle('invert', this.style.invert)
+        document.body.classList.toggle('dark', this.style.dark)
     }
 }
 
@@ -285,21 +285,15 @@ const getView = async file => {
 }
 
 const getCSS = ({ isDark, lineHeight, justify, hyphenate, invert, theme }) => [`
+    @namespace epub "http://www.idpf.org/2007/ops";
     html {
-        color-scheme: ${invert ? 'only light' : isDark ? 'only dark' : 'only light'};
-        color: ${theme.light.fg};
+        color-scheme: 'only light';
+        color: ${invert ? theme.inverted.fg : isDark ? theme.dark.fg : theme.light.fg};
     }
     a:any-link {
-        color: ${theme.light.link};
+        color: ${invert ? theme.inverted.link : isDark ? theme.dark.link : theme.light.link};
     }
-    @media (prefers-color-scheme: dark) {
-        html {
-            color: ${invert ? theme.inverted.fg : theme.dark.fg};
-        }
-        a:any-link {
-            color: ${invert ? theme.inverted.link : theme.dark.link};
-        }
-    }
+
     aside[epub|type~="endnote"],
     aside[epub|type~="footnote"],
     aside[epub|type~="note"],
