@@ -172,7 +172,7 @@ class Reader {
     }
 }
 
-const open = async file => {
+window.openReader = async file => {
     try {
         const reader = new Reader()
         globalThis.reader = reader
@@ -182,13 +182,6 @@ const open = async file => {
     }
 }
 
-const params = new URLSearchParams(location.search)
-const url = params.get('url')
-if (url) fetch(url)
-    .then(res => res.blob())
-    .then(blob => open(new File([blob], new URL(url).pathname)))
-    .catch(e => console.error(e))
-else AndroidInterface.onBookLoadFailed("Invalid Url")
 
 // Helper functions
 const isZip = async file => {

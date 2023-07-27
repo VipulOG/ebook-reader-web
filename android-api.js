@@ -1,3 +1,15 @@
+AndroidInterface.onApiLoaded()
+
+function openReader(options) {
+    const params = new URLSearchParams(location.search)
+    const url = params.get('url')
+    if (url) fetch(url, options)
+        .then(res => res.blob())
+        .then(blob => window.openReader(new File([blob], new URL(url).pathname)))
+        .catch(e => console.error(e))
+    else AndroidInterface.onBookLoadFailed("Invalid Url")
+}
+
 function next() {
     globalThis.reader.view.next()
 }
