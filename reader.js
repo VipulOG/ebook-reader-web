@@ -1,6 +1,14 @@
 import './view.js'
 import { Overlayer } from './overlayer.js'
 
+
+window.openReader = async file => {
+    const reader = new Reader()
+    globalThis.reader = reader
+    await reader.open(file)
+}
+
+
 class Reader {
     isBookLoaded = false
 
@@ -169,16 +177,6 @@ class Reader {
 
         document.body.classList.toggle('invert', this.style.invert)
         document.body.classList.toggle('dark', this.style.dark)
-    }
-}
-
-window.openReader = async file => {
-    try {
-        const reader = new Reader()
-        globalThis.reader = reader
-        await reader.open(file)
-    } catch (error) {
-        AndroidInterface.onBookLoadFailed(error)
     }
 }
 

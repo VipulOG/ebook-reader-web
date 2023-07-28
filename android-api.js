@@ -1,13 +1,18 @@
 AndroidInterface.onApiLoaded()
 
-function openReader(options) {
+async function openReader(options) {
     const params = new URLSearchParams(location.search)
     const url = params.get('url')
-    if (url) fetch(url, options)
-        .then(res => res.blob())
-        .then(blob => window.openReader(new File([blob], new URL(url).pathname)))
-        .catch(e => console.error(e))
-    else AndroidInterface.onBookLoadFailed("Invalid Url")
+
+    try {
+        const response = await fetch(url)
+        const blob = await response.blob()
+        const fileName = new URL(url).pathname
+        window.openReader(new File([blob], fileName))
+    } catch (error) {
+        console.error(error)
+        AndroidInterface.onBookLoadFailed(JSON.stringify(error, Object.getOwnPropertyNames(error)))
+    }
 }
 
 function next() {
@@ -51,8 +56,6 @@ function setAppearance(appearance) {
     layout.maxBlockSize = appearance.maxBlockSize
     layout.maxColumnCount = appearance.maxColumnCount
     layout.flow = appearance.flow
-
-    console.log(appearance)
 
     globalThis.reader.setAppearance(style, layout)
 }
