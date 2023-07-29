@@ -126,10 +126,10 @@ class Reader {
         AndroidInterface.onBookLoaded(JSON.stringify(data))
     }
 
-    lastCfi = null
+    lastLocation = { cfi:null, fraction: null }
     #onRelocate({ detail }) {
-        if (detail.cfi == this.lastCfi) return
-        this.lastLocation = Object.assign(detail.cfi)
+        if (detail.cfi == this.lastLocation.cfi || detail.fraction == this.lastLocation.fraction) return
+        this.lastLocation = Object.assign(detail)
         if (this.isBookLoaded) AndroidInterface.onRelocated(JSON.stringify(detail))
     }
 
