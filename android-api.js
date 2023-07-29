@@ -1,6 +1,6 @@
 AndroidInterface.onApiLoaded()
 
-async function openReader(options) {
+async function openReader() {
     const params = new URLSearchParams(location.search)
     const url = params.get('url')
 
