@@ -126,7 +126,10 @@ class Reader {
         AndroidInterface.onBookLoaded(JSON.stringify(data))
     }
 
+    lastCfi = null
     #onRelocate({ detail }) {
+        if (detail.cfi == this.lastCfi) return
+        this.lastLocation = Object.assign(detail.cfi)
         if (this.isBookLoaded) AndroidInterface.onRelocated(JSON.stringify(detail))
     }
 
