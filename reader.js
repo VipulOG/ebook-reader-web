@@ -16,7 +16,6 @@ class Reader {
         lineHeight: 1.4,
         justify: true,
         hyphenate: true,
-        invert: false,
         isDark: false,
         theme: {
            name: 'default',
@@ -153,12 +152,6 @@ class Reader {
         const { theme } = style
         const $style = document.documentElement.style
 
-        if (style.inverted) {
-            // TODO: Invert dark fg and link and add to theme object, eg:
-            // theme.inverted.fg = invert(theme.dark.fg)
-            // theme.inverted.link = invert(theme.dark.link)
-        }
-
         if (style.isDark) {
             $style.setProperty('--bg', theme.dark.bg)
             $style.setProperty('--fg', theme.dark.fg)
@@ -178,8 +171,7 @@ class Reader {
             renderer.setStyles?.(getCSS(this.style))
         }
 
-        document.body.classList.toggle('invert', this.style.invert)
-        document.body.classList.toggle('dark', this.style.dark)
+        document.body.classList.toggle('dark', this.style.isDark)
     }
 }
 
@@ -278,14 +270,14 @@ const getView = async file => {
     return view
 }
 
-const getCSS = ({ isDark, lineHeight, justify, hyphenate, invert, theme }) => [`
+const getCSS = ({ isDark, lineHeight, justify, hyphenate, theme }) => [`
     @namespace epub "http://www.idpf.org/2007/ops";
     html {
         color-scheme: 'only light';
-        color: ${invert ? theme.inverted.fg : isDark ? theme.dark.fg : theme.light.fg};
+        color: ${isDark ? theme.dark.fg : theme.light.fg};
     }
     a:any-link {
-        color: ${invert ? theme.inverted.link : isDark ? theme.dark.link : theme.light.link};
+        color: ${isDark ? theme.dark.link : theme.light.link};
     }
 
     aside[epub|type~="endnote"],

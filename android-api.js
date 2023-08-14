@@ -40,7 +40,6 @@ function setAppearance(appearance) {
     style.lineHeight = appearance.lineHeight
     style.justify = appearance.justify
     style.hypenate = appearance.hypenate
-    style.invert = appearance.invert
     style.theme.name = appearance.themeName
     style.theme.light.fg = appearance.lightFg
     style.theme.light.bg = appearance.lightBg
@@ -68,7 +67,6 @@ function getAppearance() {
     appearance.lineHeight = style.lineHeight
     appearance.justify = style.justify
     appearance.hypenate = style.hypenate
-    appearance.invert = style.invert
     appearance.themeName = style.theme.name
     appearance.lightFg = style.theme.light.fg
     appearance.lightBg = style.theme.light.bg
