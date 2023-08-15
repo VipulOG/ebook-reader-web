@@ -2,16 +2,9 @@ import './view.js'
 import { Overlayer } from './overlayer.js'
 
 
-window.openReader = async file => {
-    const reader = new Reader()
-    globalThis.reader = reader
-    await reader.open(file)
-}
-
+window.createReader = () => new Reader()
 
 class Reader {
-    isBookLoaded = false
-
     style = {
         lineHeight: 1.4,
         justify: true,
@@ -35,15 +28,15 @@ class Reader {
     annotations = new Map()
     annotationsByValue = new Map()
     
-    async open(file) {
-        this.view = await getView(file)
-        this.view.addEventListener('load', this.#onLoad.bind(this))
-        this.view.addEventListener('relocate', this.#onRelocate.bind(this))
-        document.addEventListener('keydown', this.#handleKeydown.bind(this))
+    async open(view, file) {
+        this.view = view
+        const book = await getBook(file)
 
-        const { book } = this.view
+        document.body.append(view)
+        await view.open(book)
+
         this.setAppearance(this.style, this.layout)
-        globalThis.reader.view.next()
+        view.next()
 
         // load and show highlights embedded in the file by Calibre
         const bookmarks = await book.getCalibreBookmarks?.()
@@ -62,89 +55,24 @@ class Reader {
                 }
             }
 
-            this.view.addEventListener('create-overlay', e => {
+            view.addEventListener('create-overlay', e => {
                 const { index } = e.detail
                 const list = this.annotations.get(index)
                 if (list) for (const annotation of list)
-                    this.view.addAnnotation(annotation)
+                    view.addAnnotation(annotation)
             })
 
-            this.view.addEventListener('draw-annotation', e => {
+            view.addEventListener('draw-annotation', e => {
                 const { draw, annotation } = e.detail
                 const { color } = annotation
                 draw(Overlayer.highlight, { color })
             })
 
-            this.view.addEventListener('show-annotation', e => {
+            view.addEventListener('show-annotation', e => {
                 const annotation = this.annotationsByValue.get(e.detail.value)
                 if (annotation.note) alert(annotation.note)
             })
         }
-    }
-
-    #handleKeydown(event) {
-        const k = event.key
-        if (k === 'ArrowLeft' || k === 'h') this.view.goLeft()
-        else if(k === 'ArrowRight' || k === 'l') this.view.goRight()
-    }
-
-    async #onLoad({ detail: { doc } }) {
-        if (this.isBookLoaded) return
-        doc.addEventListener('keydown', this.#handleKeydown.bind(this))
-        const { book } = this.view
-
-        function blobToBase64(blob) {
-          return new Promise((resolve, _) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-          });
-        }
-
-        const cover = await book?.getCover?.()
-        const coverBase64 = cover ? await blobToBase64(cover) : null
-
-        const data = {
-            title: book.metadata?.title,
-            subtitle: book.metadata?.subtitle,
-            author: book.metadata?.author,
-            description: book.metadata?.description,
-            cover: coverBase64,
-            identifier: book.metadata?.identifier,
-            language: book.metadata?.language,
-            publisher: book.metadata?.publisher,
-            contributor: book.metadata?.contributor,
-            published: book.metadata?.published,
-            modified: book.metadata?.modified,
-            subject: book.metadata?.subject,
-            rights: book.metadata?.rights,
-            toc: book.toc,
-        }
-
-        this.isBookLoaded = true
-        AndroidInterface.onBookLoaded(JSON.stringify(data))
-    }
-
-    lastLocation = { cfi:null, fraction: null }
-    #onRelocate({ detail }) {
-        if (detail.cfi == this.lastLocation.cfi || detail.fraction == this.lastLocation.fraction) return
-        this.lastLocation = Object.assign(detail)
-        if (this.isBookLoaded) AndroidInterface.onRelocated(JSON.stringify(detail))
-    }
-
-    getTocFractions() {
-        const tocFractions = []
-        const sizes = this.view.book.sections.filter(s => s.linear !== 'no').map(s => s.size)
-        if (sizes.length < 100) {
-            const total = sizes.reduce((a, b) => a + b, 0)
-            let sum = 0
-            for (const size of sizes.slice(0, -1)) {
-                sum += size
-                const fraction = sum / total
-                tocFractions.push(fraction)
-            }
-        }
-        return tocFractions
     }
 
     setAppearance(style, layout) {
@@ -230,7 +158,7 @@ const isFBZ = ({ name, type }) =>
     type === 'application/x-zip-compressed-fb2'
     || name.endsWith('.fb2.zip') || name.endsWith('.fbz')
 
-const getView = async file => {
+const getBook = async file => {
     let book
     if (file.isDirectory) {
         const loader = await makeDirectoryLoader(file)
@@ -264,10 +192,7 @@ const getView = async file => {
         }
     }
     if (!book) throw new Error('File type not supported')
-    const view = document.createElement('foliate-view')
-    document.body.append(view)
-    await view.open(book)
-    return view
+    return book
 }
 
 const getCSS = ({ isDark, lineHeight, justify, hyphenate, theme }) => [`
