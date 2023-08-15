@@ -40,6 +40,10 @@ class History extends EventTarget {
     get canGoForward() {
         return this.#index < this.#arr.length - 1
     }
+    clear() {
+        this.#arr = []
+        this.#index = -1
+    }
 }
 
 const textWalker = function* (doc, func) {
@@ -130,13 +134,14 @@ export class View extends HTMLElement {
         this.#root.append(this.renderer)
     }
     close() {
-        this.renderer?.destroy?.()
+        this.renderer?.destroy()
+        this.renderer?.remove()
         this.#sectionProgress = null
         this.#tocProgress = null
         this.#pageProgress = null
         this.#searchResults = new Map()
         this.lastLocation = null
-        this.history = new History()
+        this.history.clear()
     }
     goToTextStart() {
         return this.goTo(this.book.landmarks
@@ -330,12 +335,12 @@ export class View extends HTMLElement {
             console.error(`Could not get ${target}`)
         }
     }
-    async prev() {
-        await this.renderer.prev()
+    async prev(distance) {
+        await this.renderer.prev(distance)
         this.history.replaceState(this.lastLocation.cfi)
     }
-    async next() {
-        await this.renderer.next()
+    async next(distance) {
+        await this.renderer.next(distance)
         this.history.replaceState(this.lastLocation.cfi)
     }
     goLeft() {
