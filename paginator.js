@@ -914,7 +914,9 @@ export class Paginator extends HTMLElement {
             index: this.#adjacentIndex(dir),
             anchor: prev ? () => 1 : () => 0,
         })
-        if (shouldGo || !this.pageAnimation) await wait(100)
+        // Don't know what this is for, but it is locking navigation
+        // commenting this for now, since it seems to work without it
+        // if (shouldGo || !this.pageAnimation) await wait(100)
         this.#locked = false
     }
     prev(distance) {
