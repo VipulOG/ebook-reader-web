@@ -128,3 +128,20 @@ const setAppearance = (appearance) => {
 
     reader.setAppearance(style, layout)
 }
+
+
+function getBlobAsBase64(blobUrl, callback) {
+  fetch(blobUrl)
+    .then(response => response.blob())
+    .then(blobData => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const base64String = reader.result
+        callback(base64String)
+      }
+      reader.readAsDataURL(blobData)
+    })
+    .catch(error => {
+      console.error('Error fetching the blob:', error)
+    })
+}
