@@ -35,7 +35,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const onRelocate = ({ detail }) => {
         if (detail.cfi == lastLocation.cfi || detail.fraction == lastLocation.fraction) return
         lastLocation = Object.assign(detail)
-        if(bookLoaded) AndroidInterface.onRelocated(JSON.stringify(detail))
+
+        const data = {
+            cfi: detail.cfi,
+            fraction: detail.fraction,
+            tocItem: detail.tocItem,
+            currentLocation: detail.location.current,
+            nextLocation: detail.location.next,
+            totalLocations: detail.location.total,
+        }
+
+        if(bookLoaded) AndroidInterface.onRelocated(JSON.stringify(data))
     }
 
     view.addEventListener('load', onLoad)
